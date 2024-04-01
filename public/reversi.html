@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Reversi Game</title>
+    <link rel="stylesheet" type="text/css">
+    <style>
+        body {
+            width: 100vw;
+            height: 100wh;
+            margin: 0px;
+        }
+
+        .board {
+            width: fit-content;
+            background-color: darkgreen;
+            display: grid;
+            grid-template-columns: repeat(8, 100px);
+            grid-template-rows: repeat(8, 100px);
+        }
+
+        .board>div {
+            width: 10wh;
+            height: 10wh;
+            border: 3px solid black;
+            display: table-cell;
+            display: flex;
+        }
+
+        .black-disc {
+            width: 80%;
+            height: 80%;
+            background-color: black;
+            border-radius: 50%;
+            margin: auto;
+        }
+
+        .white-disc {
+            width: 80%;
+            height: 80%;
+            background-color: white;
+            border-radius: 50%;
+            margin: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="board" id="board"></div>
+    <h3>Turn: <span id="turn"></span></h3>
+    <button onclick="resetGame()">Restart Game</button>
+    <script src="reversi.js"></script>
+    <script type="module">
+        import { io } from "https://cdn.socket.io/4.7.2/socket.io.esm.min.js";
+        const socket = io();
+
+        let my_turn;
+
+        for (let i = 0; i < 8; i++) {
+            for (let j = 0; j < 8; j++) {
+                const cell = document.createElement('div');
+                cell.classList.add('cell');
+                cell.setAttribute('id', i * 8 + j);
+                cell.setAttribute('onclick', "move(" + i + "," + j + ")");
+                cell.addEventListener('click', () => handleMove(i, j));
+                if ((i == 3 && j == 3) || (i == 4 && j == 4)) {
+                    const disc = document.createElement('div')
+                    disc.classList.add('black-disc')
+                    cell.appendChild(disc)
+                }
+                else if ((i == 3 && j == 4) || (i == 4 && j == 3)) {
+                    const disc = document.createElement('div')
+                    disc.classList.add('white-disc')
+                    cell.appendChild(disc)
+                }
+                else {
+                    const disc = document.createElement('div')
+                    cell.appendChild(disc)
+                }
+                board.appendChild(cell)
+            }
+        }
+
+        socket.on('turn_info', (turn) => {
+            my_turn = turn
+        })
+
+        socket.on("updateGame", (mat) => {
+            for (let i = 0; i < 8; i++) {
+                for (let j = 0; j < 8; j++) {
+                    cell = document.getElementById(i * 8 + j).classList;
+                    if (mat[i][j] == "w") {
+                        cell.remove('black-disc', 'white-disc');
+                        cell.add('white-disc')
+                    }
+                    else if (mat[i][j] == "b") {
+                        cell.remove('black-disc', 'white-disc');
+                        cell.add('black-disc')
+                    }
+                    else {
+                        cell.remove('black-disc', 'white-disc');
+                    }
+                }
+            }
+        })
+
+        function move(row, col) {
+            socket.emit("button_pressed", row, col)
+        }
+
+    </script>
+</body>
+
+</html>
