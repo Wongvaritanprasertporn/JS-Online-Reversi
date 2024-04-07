@@ -1,8 +1,10 @@
 <!DOCTYPE html>
-<html>
+<html lang="th">
 
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Reversi Game</title>
+    <meta charset="UTF-8">
     <link rel="stylesheet" type="text/css">
     <style>
         body {
@@ -12,6 +14,7 @@
         }
 
         .board {
+            width: -moz-fit-content;
             width: fit-content;
             background-color: darkgreen;
             display: grid;
@@ -53,7 +56,6 @@
     <script type="module">
         import { io } from "https://cdn.socket.io/4.7.2/socket.io.esm.min.js";
         const socket = io();
-
         let my_turn;
 
         for (let i = 0; i < 8; i++) {
@@ -80,6 +82,8 @@
                 board.appendChild(cell)
             }
         }
+
+        socket.emit('enter_room')
 
         socket.on('turn_info', (turn) => {
             my_turn = turn

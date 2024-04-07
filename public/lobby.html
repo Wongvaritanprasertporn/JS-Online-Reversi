@@ -13,7 +13,7 @@
 
         socket.on("matched", (res) => {
             console.log("matched")
-            window.location.href = "http://localhost:3000/game/" + res.room_uuid
+            window.location.href = res
         })
         socket.on("gameover", () => {
             window.location.href = 'http://localhost:3000/result/'
