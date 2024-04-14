@@ -1,23 +1,25 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>
-</head>
-<body>
-    <h1>Waiting for an opponent</h1>
-    <script type="module">
-        import { io } from "https://cdn.socket.io/4.7.2/socket.io.esm.min.js";
-        const socket = io();
-
-        socket.on("matched", (res) => {
-            console.log("matched")
-            window.location.href = res
-        })
-        socket.on("gameover", () => {
-            window.location.href = 'http://localhost:3000/result/'
-        })
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      const socket = io();
+      function joinGame() {
+        socket.emit("join");
+      }
     </script>
-</body>
+  </head>
+  <body>
+    <h1>Waiting for an opponent</h1>
+    <button onclick="joinGame()">Queue</button>
+    <script type="module">
+      socket.on("matched", (res) => {
+        console.log(window.location.href + res);
+        window.location.href += res;
+      });
+    </script>
+  </body>
 </html>
