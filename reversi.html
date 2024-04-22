@@ -1,55 +1,65 @@
-<!DOCTYPE html>
-<html>
-
-<head>
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Reversi Game</title>
-    <link rel="stylesheet" type="text/css">
-    <style>
-        body {
-            width: 100vw;
-            height: 100wh;
-            margin: 0px;
-        }
-        
-        .board {
-            width: fit-content;
-            background-color: darkgreen;
-            display: grid;
-            grid-template-columns: repeat(8, 100px);
-            grid-template-rows: repeat(8, 100px);
-        }
-
-        .board > div {
-            width: 10wh;
-            height: 10wh;
-            border: 3px solid black;
-            display: table-cell;
-            display: flex;
-        }
-
-        .black-disc {
-            width: 80%;
-            height: 80%;
-            background-color: black;
-            border-radius: 50%;
-            margin: auto;
-        }
-
-        .white-disc {
-            width: 80%;
-            height: 80%;
-            background-color: white;
-            border-radius: 50%;
-            margin: auto;
-        }
-    </style>
-</head>
-
-<body>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="/style.css" />
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  </head>
+  <body>
     <div class="board" id="board"></div>
     <h3>Turn: <span id="turn"></span></h3>
-    <button onclick="resetGame()">Restart Game</button>
-    <script src="reversi.js"></script>
-</body>
+    <script type="module">
+      const socket = io();
+      socket.emit("join");
 
+      function move(row, col) {
+        socket.emit("button_pressed", row, col);
+      }
+
+      socket.on("gameover", (res) => {
+        window.location.href = window.location.href.replace("game", "result");
+      });
+
+      socket.on("updateGame", (mat, turn) => {
+        document.getElementById("turn").innerHTML = turn;
+        for (let i = 0; i < 8; i++) {
+          for (let j = 0; j < 8; j++) {
+            const disc = document.getElementById(i * 8 + j);
+            if (mat[i][j] == "white") {
+              disc.classList.remove("black-disc", "white-disc");
+              disc.classList.add("white-disc");
+            } else if (mat[i][j] == "black") {
+              disc.classList.remove("black-disc", "white-disc");
+              disc.classList.add("black-disc");
+            } else {
+              disc.classList.remove("black-disc", "white-disc");
+            }
+          }
+        }
+      });
+
+      socket.on("player_leave", () => {
+        window.location.href = "/";
+      });
+
+      for (let i = 0; i < 8; i++) {
+        for (let j = 0; j < 8; j++) {
+          const cell = document.createElement("div");
+          cell.classList.add("cell");
+          cell.addEventListener(
+            "click",
+            ((row, col) => {
+              return () => move(row, col);
+            })(i, j),
+          );
+          const disc = document.createElement("div");
+          disc.setAttribute("id", i * 8 + j);
+          cell.appendChild(disc);
+          board.appendChild(cell);
+        }
+      }
+    </script>
+  </body>
 </html>
