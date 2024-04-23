@@ -2,7 +2,7 @@ class Reversi {
   constructor() {
     this.currentPlayer = Math.random() < 0.5 ? "black" : "white";
     this.mat = new Array();
-    this.isGameOver == false;
+    this.isGameOver = false;
 
     for (let i = 0; i < 8; i++) {
       let col = new Array();
@@ -43,7 +43,7 @@ class Reversi {
         if (dr === 0 && dc === 0) continue; // Skip the current cell
         let flipDiscPos = this.flipsOpponentDiscs(row, col, dr, dc);
         if (flipDiscPos !== false) {
-          for (let disc in flipDiscPos) {
+          for (let disc of flipDiscPos) {
             valid.push(disc);
           }
         }
@@ -61,7 +61,7 @@ class Reversi {
       // Place the current player's disc
       this.mat[row][col] = this.currentPlayer;
       console.log(discsToFlip);
-      for (let disc in discsToFlip) {
+      for (let disc of discsToFlip) {
         this.mat[disc.row][disc.col] = this.currentPlayer;
       }
 
@@ -77,7 +77,7 @@ class Reversi {
         }
       }
       if (flag) {
-        this.isGameOver == true;
+        this.isGameOver = true;
       }
     }
   }
