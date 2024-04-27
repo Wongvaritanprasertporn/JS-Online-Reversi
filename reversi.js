@@ -32,12 +32,13 @@ class Reversi {
   // Function to check if a move is valid
   isValidMove(row, col) {
     // Check if the cell is empty
+    let valid = [];
     if (this.mat[row][col] !== null) {
-      return false;
+      // return empty valid objects instead false
+      return valid;
     }
 
     // Check if the move flips opponent discs in any direction
-    let valid = [];
     for (let dr = -1; dr <= 1; dr++) {
       for (let dc = -1; dc <= 1; dc++) {
         if (dr === 0 && dc === 0) continue; // Skip the current cell
@@ -55,9 +56,10 @@ class Reversi {
   // Function to handle user move and update the board
   handleMove(row, col) {
     console.log("handleMove");
+
     // Implement the game logic here, updating the board and checking for valid moves and flips
     let discsToFlip = this.isValidMove(row, col);
-    if (discsToFlip.length !== 0 && discsToFlip !== false) {
+    if (discsToFlip.length !== 0) {
       // Place the current player's disc
       this.mat[row][col] = this.currentPlayer;
       console.log(discsToFlip);
@@ -76,10 +78,13 @@ class Reversi {
           }
         }
       }
+
       if (flag) {
         this.isGameOver = true;
       }
+
     }
+
   }
 
   flipsOpponentDiscs(row, col, dr, dc) {
