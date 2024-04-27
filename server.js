@@ -91,11 +91,10 @@ app.get("/", (req, res) => {
 
 app.get("/game/:roomId", (req, res) => {
   const room = onlineRooms.find((item) => item.room_uuid === req.params.roomId);
-  if (room.player1 === req.ip || room.player2 === req.ip) {
-    res.sendFile(__dirname + "/reversi.html");
-  } else {
-    res.status(404).send("Room not found");
+  if (!room) {
+    return res.status(404).send("Room not found");
   }
+  res.sendFile(__dirname + "/reversi.html");
 });
 
 app.get("/result/:roomId", (req, res) => {

@@ -27,14 +27,11 @@
         for (let i = 0; i < 8; i++) {
           for (let j = 0; j < 8; j++) {
             const disc = document.getElementById(i * 8 + j);
+            disc.classList.remove("black-disc", "white-disc");
             if (mat[i][j] == "white") {
-              disc.classList.remove("black-disc", "white-disc");
               disc.classList.add("white-disc");
             } else if (mat[i][j] == "black") {
-              disc.classList.remove("black-disc", "white-disc");
               disc.classList.add("black-disc");
-            } else {
-              disc.classList.remove("black-disc", "white-disc");
             }
           }
         }
