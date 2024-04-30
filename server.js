@@ -8,55 +8,36 @@ const port = process.env.PORT || 3000;
 
 app.use(express.static(__dirname + "/"));
 
-const matchmakingQueue = [];
 const onlineRooms = [];
 
 io.on("connection", (socket) => {
-  let color;
-  let room_uuid;
+
   let game;
 
-  socket.on("checkRoom", () => {
-    let room = onlineRooms.find(
-      (item) =>
-        item.player1 === socket.handshake.address ||
-        item.player2 === socket.handshake.address,
-    );
-    if (room != undefined) {
-      socket.emit("roomFound", room.room_uuid);
-    }
-  });
 
-  socket.on("join", () => {
-    let room = onlineRooms.find(
-      (item) =>
-        item.player1 === socket.handshake.address ||
-        item.player2 === socket.handshake.address,
-    );
-    if (room !== undefined) {
-      room_uuid = room.room_uuid;
-      socket.join(room_uuid);
+  socket.on("join", (roomId) => {
+    if (roomId) {
+
+      const room = onlineRooms.find((item) => item.roomId === roomId);
+
+      // Join the room
+      socket.join(roomId);
       game = room.reversi;
-      if (room.player1 === socket.handshake.address) {
-        color = "white";
-      } else {
-        color = "black";
-      }
-      io.to(room_uuid).emit("updateGame", game.mat, game.currentPlayer);
+      io.to(roomId).emit("updateGame", game.mat, game.currentPlayer);
     }
   });
 
-  socket.on("button_pressed", (row, col) => {
-    if (color === game.currentPlayer) {
-      game.handleMove(row, col);
-      io.to(room_uuid).emit("updateGame", game.mat, game.currentPlayer);
-      if (game.isGameOver) {
-        io.to(room_uuid).emit("gameover");
-      }
+  socket.on("button_pressed", (row, col, roomId) => {
+    if (game.isGameOver) {
+      io.to(roomId).emit("gameover");
     }
+
+    game.handleMove(row, col);
+    io.to(roomId).emit("updateGame", game.mat, game.currentPlayer);
   });
 
   socket.on("disconnect", async () => {
+    console.debug(socket.id)
     socket.emit("player_leave");
     setTimeout(() => {
       let index = -1;
@@ -74,28 +55,35 @@ io.on("connection", (socket) => {
 });
 
 app.get("/", (req, res) => {
-  matchmakingQueue.push(req.ip);
-  res.sendFile("lobby.html", { root: __dirname });
-  if (matchmakingQueue.length >= 2) {
-    let player1 = matchmakingQueue.shift();
-    let player2 = matchmakingQueue.shift();
-    const room_uuid = uuidv4();
-    onlineRooms.push({
-      room_uuid: room_uuid,
-      reversi: new Reversi(),
-      player1: player1,
-      player2: player2,
-    });
+  // Check if there are any online rooms
+  if (onlineRooms.length) {
+    // Filter online rooms to get only the ones that are not full and get the first one
+    const room = onlineRooms.find((room) => room.player2.status !== 'JOINED');
+
+    if (!room) {
+      createRoom(res);
+      return;
+    }
+
+    // If there is a room that is not full, join the room
+    const { roomId } = room;
+    const indexOfRoom = onlineRooms.indexOf(room);
+    // Update the room
+    onlineRooms[indexOfRoom].player2 = {
+      status: 'JOINED',
+      uuid: uuidv4(),
+    }
+
+    // Send the user to the first room that is not full
+    res.redirect(`/game/${roomId}`);
+  } else {
+    createRoom(res);
   }
 });
 
 app.get("/game/:roomId", (req, res) => {
-  const room = onlineRooms.find((item) => item.room_uuid === req.params.roomId);
-  if (room.player1 === req.ip || room.player2 === req.ip) {
-    res.sendFile(__dirname + "/reversi.html");
-  } else {
-    res.status(404).send("Room not found");
-  }
+  const { roomId } = req.params;
+  if (roomId) res.sendFile(__dirname + "/reversi.html");
 });
 
 app.get("/result/:roomId", (req, res) => {
@@ -107,6 +95,27 @@ app.get("/result/:roomId", (req, res) => {
     onlineRooms.delete(room);
   }
 });
+
+
+/**
+ *  Create a new room and send the user to the room
+ * @param {Response} res 
+ */
+const createRoom = (res) => {
+  const roomId = uuidv4(); // generate a random room id
+  // Create a new room
+  const room = {
+    roomId: roomId,
+    player1: { status: 'JOINED', uuid: uuidv4() },
+    player2: { status: 'WAITING', uuid: null },
+    reversi: new Reversi(),
+  };
+
+  onlineRooms.push(room);
+
+  // Send the user to the room
+  res.redirect(`/game/${roomId}`);
+};
 
 server.listen(port, () => {
   console.log(`Server running on port ${port}`);

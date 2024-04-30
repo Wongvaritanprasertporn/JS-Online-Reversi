@@ -1,65 +1,71 @@
 <!doctype html>
 <html lang="th">
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Reversi Game</title>
-    <meta charset="UTF-8" />
-    <link rel="stylesheet" href="/style.css" />
-    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-  </head>
-  <body>
-    <div class="board" id="board"></div>
-    <h3>Turn: <span id="turn"></span></h3>
-    <script type="module">
-      const socket = io();
-      socket.emit("join");
 
-      function move(row, col) {
-        socket.emit("button_pressed", row, col);
-      }
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Reversi Game</title>
+  <meta charset="UTF-8" />
+  <link rel="stylesheet" href="/style.css" />
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+</head>
 
-      socket.on("gameover", (res) => {
-        window.location.href = window.location.href.replace("game", "result");
-      });
+<body>
+  <div class="board" id="board"></div>
+  <h3>Turn: <span id="turn"></span></h3>
+  <script type="module">
+    const socket = io(); // connect to server socket
+    const roomId = window.location.pathname.split("/")[2];
 
-      socket.on("updateGame", (mat, turn) => {
-        document.getElementById("turn").innerHTML = turn;
-        for (let i = 0; i < 8; i++) {
-          for (let j = 0; j < 8; j++) {
-            const disc = document.getElementById(i * 8 + j);
-            if (mat[i][j] == "white") {
-              disc.classList.remove("black-disc", "white-disc");
-              disc.classList.add("white-disc");
-            } else if (mat[i][j] == "black") {
-              disc.classList.remove("black-disc", "white-disc");
-              disc.classList.add("black-disc");
-            } else {
-              disc.classList.remove("black-disc", "white-disc");
-            }
-          }
-        }
-      });
+    // join room
+    socket.emit("join", roomId);
 
-      socket.on("player_leave", () => {
-        window.location.href = "/";
-      });
+    function move(row, col) {
+      socket.emit("button_pressed", row, col, roomId);
+    }
 
+    socket.on("gameover", (res) => {
+      window.location.href = window.location.href.replace("game", "result");
+    });
+
+    socket.on("updateGame", (mat, turn) => {
+      document.getElementById("turn").innerHTML = turn;
       for (let i = 0; i < 8; i++) {
         for (let j = 0; j < 8; j++) {
-          const cell = document.createElement("div");
-          cell.classList.add("cell");
-          cell.addEventListener(
-            "click",
-            ((row, col) => {
-              return () => move(row, col);
-            })(i, j),
-          );
-          const disc = document.createElement("div");
-          disc.setAttribute("id", i * 8 + j);
-          cell.appendChild(disc);
-          board.appendChild(cell);
+          const disc = document.getElementById(i * 8 + j);
+          if (mat[i][j] == "white") {
+            disc.classList.remove("black-disc", "white-disc");
+            disc.classList.add("white-disc");
+          } else if (mat[i][j] == "black") {
+            disc.classList.remove("black-disc", "white-disc");
+            disc.classList.add("black-disc");
+          } else {
+            disc.classList.remove("black-disc", "white-disc");
+          }
         }
       }
-    </script>
-  </body>
+    });
+
+    socket.on("player_leave", () => {
+      window.location.href = "/";
+    });
+
+    for (let i = 0; i < 8; i++) {
+      for (let j = 0; j < 8; j++) {
+        const cell = document.createElement("div");
+        cell.classList.add("cell");
+        cell.addEventListener(
+          "click",
+          ((row, col) => {
+            return () => move(row, col);
+          })(i, j),
+        );
+        const disc = document.createElement("div");
+        disc.setAttribute("id", i * 8 + j);
+        cell.appendChild(disc);
+        board.appendChild(cell);
+      }
+    }
+  </script>
+</body>
+
 </html>
