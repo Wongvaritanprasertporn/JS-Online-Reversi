@@ -33,7 +33,7 @@ class Reversi {
   isValidMove(row, col) {
     // Check if the cell is empty
     if (this.mat[row][col] !== null) {
-      return false;
+      return new Array();
     }
 
     // Check if the move flips opponent discs in any direction
