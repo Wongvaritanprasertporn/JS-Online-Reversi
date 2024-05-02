@@ -11,7 +11,7 @@ app.use(express.static(__dirname + "/"));
 const matchmakingQueue = [];
 const onlineRooms = [];
 
-let socker_id_list = [];
+let socket_id_list = [];
 let player = {}
 
 io.on("connection", (socket) => {
@@ -38,15 +38,15 @@ io.on("connection", (socket) => {
         item.player2 === socket.handshake.address,
     );
 
-    socker_id_list.push(socket.id)
+    socket_id_list.push(socket.id)
 
-    if (socker_id_list.length === 2) {
+    if (socket_id_list.length === 2) {
       // Shuffle the array
-      socker_id_list.sort(() => Math.random() - 0.5);
+      socket_id_list.sort(() => Math.random() - 0.5);
 
       // Assign colors
-      player[socker_id_list[0]] = "black";
-      player[socker_id_list[1]] = "white";
+      player[socket_id_list[0]] = "black";
+      player[socket_id_list[1]] = "white";
     }
 
     if (room !== undefined) {
