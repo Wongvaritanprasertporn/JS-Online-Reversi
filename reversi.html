@@ -9,6 +9,7 @@
   </head>
   <body>
     <div class="board" id="board"></div>
+    <h3>you: <span id="you"></span></h3>
     <h3>Turn: <span id="turn"></span></h3>
     <script type="module">
       const socket = io();
@@ -22,7 +23,8 @@
         window.location.href = window.location.href.replace("game", "result");
       });
 
-      socket.on("updateGame", (mat, turn) => {
+      socket.on("updateGame", (mat, turn, color) => {
+        document.getElementById("you").innerHTML = color
         document.getElementById("turn").innerHTML = turn;
         for (let i = 0; i < 8; i++) {
           for (let j = 0; j < 8; j++) {

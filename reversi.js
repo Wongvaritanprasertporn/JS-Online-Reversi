@@ -69,7 +69,6 @@ class Reversi {
 
       // Switch to the other player's turn
       this.currentPlayer = this.currentPlayer === "black" ? "white" : "black";
-
       let flag = true;
       for (let row = 0; row < 8; row++) {
         for (let col = 0; col < 8; col++) {
@@ -78,13 +77,10 @@ class Reversi {
           }
         }
       }
-
       if (flag) {
         this.isGameOver = true;
       }
-
     }
-
   }
 
   flipsOpponentDiscs(row, col, dr, dc) {

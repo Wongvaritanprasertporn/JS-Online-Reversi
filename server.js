@@ -12,7 +12,7 @@ const matchmakingQueue = [];
 const onlineRooms = [];
 
 let socket_id_list = [];
-let player = {}
+let player = {};
 
 io.on("connection", (socket) => {
   let color;
@@ -31,24 +31,17 @@ io.on("connection", (socket) => {
   });
 
   socket.on("join", () => {
-
     let room = onlineRooms.find(
       (item) =>
         item.player1 === socket.handshake.address ||
         item.player2 === socket.handshake.address,
     );
-
-    socket_id_list.push(socket.id)
-
+    socket_id_list.push(socket.id);
     if (socket_id_list.length === 2) {
-      // Shuffle the array
-      socket_id_list.sort(() => Math.random() - 0.5);
-
-      // Assign colors
-      player[socket_id_list[0]] = "black";
+      socket_id_list.sort(() => Math.random() - 0.5); // Shuffle the array
+      player[socket_id_list[0]] = "black"; // Assign colors
       player[socket_id_list[1]] = "white";
     }
-
     if (room !== undefined) {
       room_uuid = room.room_uuid;
       socket.join(room_uuid);
@@ -58,9 +51,13 @@ io.on("connection", (socket) => {
       } else {
         color = "black";
       }
-      io.to(room_uuid).emit("updateGame", game.mat, game.currentPlayer);
+      io.to(room_uuid).emit(
+        "updateGame",
+        game.mat,
+        game.currentPlayer,
+        player[socket.id],
+      );
     }
-
   });
 
   socket.on("button_pressed", (row, col) => {
