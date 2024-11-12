@@ -11,61 +11,67 @@ app.use(express.static(__dirname + "/"));
 const matchmakingQueue = [];
 const onlineRooms = [];
 
-let socket_id_list = [];
-let player = {};
-
 io.on("connection", (socket) => {
-  let color;
-  let room_uuid;
   let game;
 
-  socket.on("checkRoom", () => {
-    let room = onlineRooms.find(
-      (item) =>
-        item.player1 === socket.handshake.address ||
-        item.player2 === socket.handshake.address,
-    );
-    if (room != undefined) {
-      socket.emit("roomFound", room.room_uuid);
+  app.get("/game/:roomId", (req, res) => {
+    if (game.black_player === socket.id || game.white_player === socket.id) {
+      res.sendFile(__dirname + "/reversi.html");
+    } else {
+      res.status(404).send("Room not found");
     }
   });
 
-  socket.on("join", () => {
-    let room = onlineRooms.find(
-      (item) =>
-        item.player1 === socket.handshake.address ||
-        item.player2 === socket.handshake.address,
-    );
-    socket_id_list.push(socket.id);
-    if (socket_id_list.length === 2) {
-      socket_id_list.sort(() => Math.random() - 0.5); // Shuffle the array
-      player[socket_id_list[0]] = "black"; // Assign colors
-      player[socket_id_list[1]] = "white";
-    }
-    if (room !== undefined) {
-      room_uuid = room.room_uuid;
-      socket.join(room_uuid);
-      game = room.reversi;
-      if (room.player1 === socket.handshake.address) {
-        color = "white";
-      } else {
-        color = "black";
+  app.get("/result/:roomId", (req, res) => {
+    if (game.black_player === socket.id || game.white_player === socket.id) {
+      if (game.reversi.isGameOver) {
+        res.send(game.reversi.getCurrentPcs);
       }
-      io.to(room_uuid).emit(
-        "updateGame",
-        game.mat,
-        game.currentPlayer,
-        player[socket.id],
+      onlineRooms.delete(game);
+    }
+  });
+
+  socket.on("queue", () => {
+    matchmakingQueue.push(socket.id);
+    //console.log(matchmakingQueue);
+    if (matchmakingQueue.length >= 2) {
+      let room_uuid = uuidv4();
+      let newRoom = {
+        room_uuid: room_uuid,
+        reversi: new Reversi(),
+      };
+      if (Math.random() >= 0.5) {
+        newRoom.black_player = matchmakingQueue.shift();
+        newRoom.white_player = matchmakingQueue.shift();
+      } else {
+        newRoom.white_player = matchmakingQueue.shift();
+        newRoom.black_player = matchmakingQueue.shift();
+      }
+      onlineRooms.push(newRoom);
+      socket.join(room_uuid);
+      //console.log(onlineRooms);
+      game = onlineRooms.find(
+        (item) =>
+          item.black_player === socket.id || item.white_player === socket.id,
       );
+      //console.log(game);
+      io.to(newRoom.black_player).emit("roomFound", room_uuid);
+      io.to(newRoom.white_player).emit("roomFound", room_uuid);
     }
   });
 
   socket.on("button_pressed", (row, col) => {
-    if (player[socket.id] === game.currentPlayer) {
+    if (
+      (game.reversi.currentPlayer === "black" &&
+        game.black_player == socket.id) ||
+      (game.reversi.currentPlayer === "white" && game.white_player == socket.id)
+    ) {
       game.handleMove(row, col);
-      io.to(room_uuid).emit("updateGame", game.mat, game.currentPlayer);
-      if (game.isGameOver) {
-        io.to(room_uuid).emit("gameover");
+      socket
+        .to(game.room_uuid)
+        .emit("updateGame", game.mat, game.currentPlayer);
+      if (game.reversi.isGameOver) {
+        socket.to(game.room_uuid).emit("gameover");
       }
     }
   });
@@ -88,38 +94,7 @@ io.on("connection", (socket) => {
 });
 
 app.get("/", (req, res) => {
-  matchmakingQueue.push(req.ip);
   res.sendFile("lobby.html", { root: __dirname });
-  if (matchmakingQueue.length >= 2) {
-    let player1 = matchmakingQueue.shift();
-    let player2 = matchmakingQueue.shift();
-    const room_uuid = uuidv4();
-    onlineRooms.push({
-      room_uuid: room_uuid,
-      reversi: new Reversi(),
-      player1: player1,
-      player2: player2,
-    });
-  }
-});
-
-app.get("/game/:roomId", (req, res) => {
-  const room = onlineRooms.find((item) => item.room_uuid === req.params.roomId);
-  if (room.player1 === req.ip || room.player2 === req.ip) {
-    res.sendFile(__dirname + "/reversi.html");
-  } else {
-    res.status(404).send("Room not found");
-  }
-});
-
-app.get("/result/:roomId", (req, res) => {
-  const room = onlineRooms.find((item) => item.room_uuid === req.params.roomId);
-  if (room.player1 === req.ip || room.player2 === req.ip) {
-    if (room.reversi.isGameOver) {
-      res.send(game.reversi.getCurrentPcs);
-    }
-    onlineRooms.delete(room);
-  }
 });
 
 server.listen(port, () => {

@@ -1,19 +1,17 @@
-<!doctype html>
-<html lang="th">
+<html>
   <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Reversi Game</title>
     <meta charset="UTF-8" />
-    <link rel="stylesheet" href="/style.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Lobby Page</title>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <link rel="stylesheet" href="/style.css" />
   </head>
   <body>
     <div class="board" id="board"></div>
-    <h3>you: <span id="you"></span></h3>
+    <h3>Color: <span id="you"></span></h3>
     <h3>Turn: <span id="turn"></span></h3>
-    <script type="module">
+    <script>
       const socket = io();
-      socket.emit("join");
 
       function move(row, col) {
         socket.emit("button_pressed", row, col);
@@ -24,7 +22,7 @@
       });
 
       socket.on("updateGame", (mat, turn, color) => {
-        document.getElementById("you").innerHTML = color
+        document.getElementById("you").innerHTML = color;
         document.getElementById("turn").innerHTML = turn;
         for (let i = 0; i < 8; i++) {
           for (let j = 0; j < 8; j++) {

@@ -1,19 +1,26 @@
 <!doctype html>
-<html lang="en">
+<html>
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Lobby Page</title>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <link rel="stylesheet" href="/style.css" />
     <script>
       const socket = io();
-
-      setInterval(() => {
-        socket.emit("checkRoom");
-      }, 3000);
+      socket.emit("queue");
 
       socket.on("roomFound", (room_uuid) => {
-        window.location.href += `game/${room_uuid}`;
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function () {
+          if (this.readyState == 4 && this.status == 200) {
+            window.location = window.location.toString() + `game/${room_uuid}`;
+            document.getElementsByTagName("body")[0].innerHTML =
+              xhttp.responseText;
+          }
+        };
+        xhttp.open("GET", `game/${room_uuid}`, true);
+        xhttp.send();
       });
     </script>
   </head>
