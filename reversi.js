@@ -54,7 +54,7 @@ class Reversi {
         black += this.mat[i][j] === "black" ? 1 : 0;
       }
     }
-    return { white, black };
+    return [white, black];
   }
 
   isValidMove(row, col, turn) {

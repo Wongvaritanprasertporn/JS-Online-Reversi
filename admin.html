@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <title>Page Title</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+    <link rel='stylesheet' type='text/css' media='screen' href='main.css'>
+    <script src='admin.js'></script>
+</head>
+<body>
+    <script>
+        const adminSocket = io("/admin");
+        socket.on("onlineRoomUpdate", (onlineRooms) => {
+            onlineRooms.forEach(element => {
+                document.write(`
+                <div style="border 1px solid black">
+                    <h1>${element.room_uuid}</h1>
+                    <p>${element.black_player}</p>
+                    <p>${element.white_player}</p>
+                    <p>${element.reversi.currentPlayer}</p>
+                    <p>${element.reversi.mat}</p>
+                    <p>${element.reversi.isGameOver}</p>
+                </div>
+                `)
+            });
+        })
+    </script>
+</body>
+</html>

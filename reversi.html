@@ -1,65 +1,86 @@
+<!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Lobby Page</title>
-    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-    <link rel="stylesheet" href="/style.css" />
-  </head>
-  <body>
-    <div class="board" id="board"></div>
-    <h3>Color: <span id="you"></span></h3>
-    <h3>Turn: <span id="turn"></span></h3>
-    <script>
-      const socket = io();
 
-      function move(row, col) {
-        socket.emit("button_pressed", row, col);
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lobby Page</title>
+  <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+
+<body>
+  <div id="overlay" onclick="off()"></div>
+  <div class="board" id="board"></div>
+  <h3>Color: <span id="you"></span></h3>
+  <h3>Turn: <span id="turn"></span></h3>
+  <script>
+    for (let i = 0; i < 8; i++) {
+      for (let j = 0; j < 8; j++) {
+        const cell = document.createElement("div");
+        cell.classList.add("cell"); cell.addEventListener("click", () => socket.emit("button_pressed", i, j));
+        const disc = document.createElement("div");
+        disc.setAttribute("id", i * 8 + j);
+        cell.appendChild(disc);
+        board.appendChild(cell);
       }
+    }
 
-      socket.on("gameover", (res) => {
-        window.location.href = window.location.href.replace("game", "result");
-      });
+    const socket = io('http://localhost:3000', {
+      autoConnect: true, // Automatically attempt to reconnect
+      reconnection: true, // Enable reconnection
+      reconnectionAttempts: 5, // Max reconnection attempts
+      reconnectionDelay: 10000 // Delay between attempts in ms
+    });
 
-      socket.on("updateGame", (mat, turn, color) => {
-        document.getElementById("you").innerHTML = color;
-        document.getElementById("turn").innerHTML = turn;
-        for (let i = 0; i < 8; i++) {
-          for (let j = 0; j < 8; j++) {
-            const disc = document.getElementById(i * 8 + j);
-            if (mat[i][j] == "white") {
-              disc.classList.remove("black-disc", "white-disc");
-              disc.classList.add("white-disc");
-            } else if (mat[i][j] == "black") {
-              disc.classList.remove("black-disc", "white-disc");
-              disc.classList.add("black-disc");
-            } else {
-              disc.classList.remove("black-disc", "white-disc");
-            }
-          }
-        }
-      });
+    socket.on('connect', () => {
+      console.log(`Connected with ID: ${socket.id}`);
+      const parts = window.location.href.split('/');
+      const room_uuid = parts[parts.length - 2];
+      console.log(room_uuid);
+      if (socket.recovered) {
+        socket.emit('reconnectAttempt', room_uuid)
+      }
+    });
 
-      socket.on("player_leave", () => {
-        window.location.href = "/";
-      });
+    socket.on("gameover", (pcs) => {
+      const overlayModal = document.getElementById("overlay");
+      overlayModal.style.display = "block";
+      overlayModal.innerHTML = `
+        <h1>${pcs.white < pcs.black ? 'Black' : 'White'} won!</h1>
+        <p>Black : ${pcs.black}</p>
+        <p>White : ${pcs.white}</p>
+      `
+    });
 
+    socket.on("updateGame", (mat, turn) => {
+      document.getElementById("turn").innerHTML = turn;
       for (let i = 0; i < 8; i++) {
         for (let j = 0; j < 8; j++) {
-          const cell = document.createElement("div");
-          cell.classList.add("cell");
-          cell.addEventListener(
-            "click",
-            ((row, col) => {
-              return () => move(row, col);
-            })(i, j),
-          );
-          const disc = document.createElement("div");
-          disc.setAttribute("id", i * 8 + j);
-          cell.appendChild(disc);
-          board.appendChild(cell);
+          const disc = document.getElementById(i * 8 + j);
+          if (mat[i][j] == "white") {
+            disc.classList.remove("black-disc", "white-disc");
+            disc.classList.add("white-disc");
+          } else if (mat[i][j] == "black") {
+            disc.classList.remove("black-disc", "white-disc");
+            disc.classList.add("black-disc");
+          } else disc.classList.remove("black-disc", "white-disc");
         }
       }
-    </script>
-  </body>
+    });
+
+    socket.on("player_leave", () => {
+      const overlayModal = document.getElementById("overlay");
+      overlayModal.style.display = "block";
+      overlayModal.innerHTML = 'Opponent Disconnected';
+    });
+
+    socket.on('color', color => document.getElementById("you").innerHTML = color)
+
+    function off() {
+      document.getElementById("overlay").style.display = "none";
+    }
+  </script>
+</body>
+
 </html>

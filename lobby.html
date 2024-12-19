@@ -1,30 +1,52 @@
-<!doctype html>
-<html>
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Lobby Page</title>
-    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-    <link rel="stylesheet" href="/style.css" />
-    <script>
-      const socket = io();
-      socket.emit("queue");
+<!DOCTYPE html>
+<html lang="en">
 
-      socket.on("roomFound", (room_uuid) => {
-        var xhttp = new XMLHttpRequest();
-        xhttp.onreadystatechange = function () {
-          if (this.readyState == 4 && this.status == 200) {
-            window.location = window.location.toString() + `game/${room_uuid}`;
-            document.getElementsByTagName("body")[0].innerHTML =
-              xhttp.responseText;
-          }
-        };
-        xhttp.open("GET", `game/${room_uuid}`, true);
-        xhttp.send();
-      });
-    </script>
-  </head>
-  <body>
-    <h1>Waiting for an opponent...</h1>
-  </body>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+  <title>Document</title>
+</head>
+
+<body>
+  <h1>Waiting for an opponent...</h1>
+  <script>
+    const socket = io('http://localhost:3000', {
+      autoConnect: true, // Automatically attempt to reconnect
+      reconnection: true, // Enable reconnection
+      reconnectionAttempts: 5, // Max reconnection attempts
+      reconnectionDelay: 10000 // Delay between attempts in ms
+    });
+
+    socket.on('connect', () => {
+      socket.emit('queue')
+      console.log(`Connected with ID: ${socket.id}`);
+    });
+
+    socket.on("roomFound", (room_uuid) => {
+      console.log(`Room found: ${room_uuid}`)
+      window.location.href = window.location.toString() + `game/${room_uuid}`;
+    });
+
+    socket.on('disconnect', () => {
+      console.log('Disconnected from server.');
+    });
+
+    socket.on('reconnect', (attemptNumber) => {
+      console.log(`Reconnected to server after ${attemptNumber} attempts.`);
+      // Optionally re-send the state or sync up
+      socket.emit('save-state', clientState);
+    });
+
+    socket.on('reconnect_attempt', () => {
+      console.log('Attempting to reconnect...');
+    });
+
+    socket.on('reconnect_failed', () => {
+      console.log('Reconnection failed.');
+    });
+    
+  </script>
+</body>
+
 </html>
